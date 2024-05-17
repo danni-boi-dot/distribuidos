@@ -1,0 +1,220 @@
+body {
+  height: 100vh; 
+  background-color: #010718;
+  color: #eff4ff;
+  font-family: "MuseoModerno", sans-serif;
+}
+button{
+  background-color:#b5cfff;
+  cursor: pointer;
+}
+.menu{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+}
+.menu button{
+  padding: 50px;
+  margin: 0 auto;
+  border: none;
+  border-radius: 5px;
+  background-color:#0041d5;
+  color: #eff4ff;
+  cursor: pointer;
+}
+.captura{
+    background-color: #b5cfff;
+    color: #010718;
+    margin: auto;
+    padding: 20px;
+    width: 80%;  
+}
+.captura button{
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 5px;
+  background-color: #dee7ff;
+}
+.captura input[type="text"], input[type="number"]{
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  box-sizing: border-box;
+  border: 2px solid #b5cfff;
+  border-radius: 4px;
+  background-color: #dee7ff;
+}
+.comprar {
+  background-color: #b5cfff;
+  color: #010718;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;  
+}
+#encabezado_busqueda {
+  background-color: #dee7ff;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px 0 rgba(0,0,0,0.2);
+}
+#encabezado_busqueda h2{
+  margin: 0;
+}
+#comprar_articulos button:hover {
+  background-color: #2a7aff;
+}
+.comprar-busqueda{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.comprar-busqueda select{
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #b5cfff;
+  border-radius: 4px;
+  background-color: #eff4ff;
+  font-size: 16px;
+  color: #333;
+}
+.comprar-busqueda select:focus {
+  outline: none;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+.comprar-articulos{
+  display: flex;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #dee7ff;  
+  box-shadow: 0 2px 4px 0 rgba(0,0,0,0.2);
+}
+#muestra_articulos {
+  display: flex;
+  justify-content: space-between;
+}
+#ver_carrito {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+}
+.comprar_details{
+  width: 70%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-left: 0;
+}
+.comprar_bought{
+  width: 25%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: right;
+}
+.comprar-articulos img{
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  margin-right: 0;
+}
+.comprar button{
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 2px solid #b5cfff;
+}
+.comprar input[type="text"]{
+  width: 50%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  box-sizing: border-box;
+  border: 2px solid #b5cfff;
+  border-radius: 4px;
+  background-color: #eff4ff;
+}
+#muestra_articulos button{
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+/* Estilos para la sección del carrito de compras */
+#carrito_compras {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+#carrito_compras h2 {
+  text-align: center;
+  color: #eff4ff;
+  margin-bottom: 20px;
+}
+
+.comprar_carrito {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  color: #010718;
+  background-color: #dee7ff;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+  width: 80%;
+  border-radius: 5px;
+}
+
+.comprar_carrito button{
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  border: 2px solid #b5cfff;
+}
+
+.comprar_carrito img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 5px;
+  margin-right: 20px;
+}
+
+.carrito_details {
+  flex: 2;
+  padding: 0 20px;
+}
+
+.carrito_details h3 {
+  margin: 0 0 10px;
+  color: #010718;
+}
+
+.carrito_details p {
+  margin: 0;
+  color: #333;
+}
+
+.carrito_bought {
+  text-align: right;
+  color: #010718;
+}
+

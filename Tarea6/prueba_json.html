@@ -1,0 +1,342 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" charset="utf-8">
+    <meta name="author" content="Daniel, mayo 2024">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=MuseoModerno:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <script src='/WSClient.js'></script>
+    <script>
+        var URL = "/Servicio/rest/ws";
+        var foto = null;
+
+        function muestra_pantalla_compra() {
+            muestra_pantalla('busqueda_articulos');
+            limpia_resultados();
+        }
+
+        function agregarCarrito(id, cantidad) {
+            console.log("ID del artículo:", id);
+            var data = {
+                idArticulo: id,
+                cantidad: cantidad
+            };
+
+            var cliente = new WSClient(URL);
+            cliente.postJson("compra_articulo", data, function(code, result) {
+                if (code == 200) {
+                    alert("Artículo agregado al carrito de compra.");
+                } else if (code == 409) {
+                    alert("No hay suficientes artículos disponibles en stock.");
+                } else {
+                    alert("Error al agregar artículo al carrito de compra.");
+                }
+            });
+        }
+
+        function limpia_resultados() {
+            var contenedor = document.getElementById("muestra_articulos");
+            while (contenedor.firstChild) {
+                contenedor.removeChild(contenedor.firstChild);
+            }
+        }
+
+        function orderby() {
+            var select = document.getElementById("busqueda_orderby");
+            var orderby = select.options[select.selectedIndex].value;
+            var articulos = document.getElementsByClassName("comprar-articulos");
+            var articulosArray = Array.from(articulos);
+
+            switch (orderby) {
+                case "nombre":
+                    articulosArray.sort((a, b) => {
+                        var nombreA = a.querySelector('.comprar-details h3').textContent.toLowerCase();
+                        var nombreB = b.querySelector('.comprar-details h3').textContent.toLowerCase();
+                        return nombreA.localeCompare(nombreB);
+                    });
+                    break;
+                case "precio":
+                    articulosArray.sort((a, b) => {
+                        var precioA = parseFloat(a.querySelector('.comprar-bought p').textContent.slice(2));
+                        var precioB = parseFloat(b.querySelector('.comprar-bought p').textContent.slice(2));
+                        return precioA - precioB;
+                    });
+                    break;
+                case "precio_desc":
+                    articulosArray.sort((a, b) => {
+                        var precioA = parseFloat(a.querySelector('.comprar-bought p').textContent.slice(2));
+                        var precioB = parseFloat(b.querySelector('.comprar-bought p').textContent.slice(2));
+                        return precioB - precioA;
+                    });
+                    break;
+                case "relevancia":
+                    articulosArray.sort((a, b) => {
+                        var relevanciaA = parseInt(a.querySelector('.comprar-bought input[type="number"]').value);
+                        var relevanciaB = parseInt(b.querySelector('.comprar-bought input[type="number"]').value);
+                        return relevanciaB - relevanciaA;
+                    });
+                    break;
+                default:
+                    // No se realiza ningún ordenamiento
+                    break;
+            }
+
+            var contenedor = document.getElementById("muestra_articulos");
+            contenedor.innerHTML = ""; // Limpiamos el contenedor
+
+            articulosArray.forEach(function(articulo) {
+                contenedor.appendChild(articulo); // Agregamos los artículos ordenados al contenedor
+            });
+        }
+
+        function busqueda() {
+            limpia_resultados();
+            var cliente = new WSClient(URL);
+            cliente.postJson("busqueda_articulos", {
+                palabraClave: get("buscar_articulo").value,
+                orden: get("busqueda_orderby").selectedIndex
+            }, function(code, result) {
+                if (code == 200 && result.length > 0) {
+                    // Limpiar cualquier resultado anterior
+                    oculta("muestra_articulos");
+                    console.log(result);
+                    // Iterar sobre todos los resultados encontrados
+                    result.forEach(function(articulo) {
+                        // Crear elementos HTML para mostrar cada artículo
+                        var nuevoArticulo = document.createElement("div");
+                        nuevoArticulo.classList.add("comprar-articulos");
+                        nuevoArticulo.innerHTML = `
+                            <img src="${articulo.foto != null ? 'data:image/jpeg;base64,' + articulo.foto : '/usuario_sin_foto.png'}" alt="">
+                            <div class="comprar_details">
+                                <h3>${articulo.nombre}</h3>
+                                <p>${articulo.descripcion}</p>
+                            </div>
+                            <div class="comprar_bought">
+                                <p>$ ${articulo.precio}</p>
+                                <input type="number" class="cantidad" value="1" min="1" placeholder="Cantidad">
+                                <button type="button" class="agregar-carrito" onclick="agregarCarrito('${articulo.id_articulo}', this.parentNode.querySelector('.cantidad').value)">Comprar</button>
+                                <p>${articulo.existencia}</p>
+                            </div>
+                        `;
+                        nuevoArticulo.dataset.id = articulo.id_articulo; 
+                        // Agregar el nuevo artículo al contenedor de artículos
+                        document.getElementById("muestra_articulos").appendChild(nuevoArticulo);
+                    });
+
+                    // Mostrar la sección de artículos encontrados
+                    muestra("muestra_articulos");
+                    muestra("encabezado_orderby");
+                } else {
+                    // Si no se encontraron resultados o hubo un error, mostrar un mensaje
+                    alert("No se encontraron resultados o hubo un error en la búsqueda.");
+                }
+            });
+        }
+
+        function get(id) {
+            return document.getElementById(id);
+        }
+
+        function muestra(id) {
+            get(id).style.display = "block";
+        }
+
+        function oculta(id) {
+            get(id).style.display = "none";
+        }
+
+        function muestra_pantalla(id) {
+            oculta("inicio");
+            muestra(id);
+        }
+
+        function muestra_carrito() {
+            oculta("busqueda_articulos");
+            oculta("muestra_articulos");
+            oculta("encabezado_orderby");
+            var cliente = new WSClient(URL);
+            cliente.postJson("ver_carrito", {}, function(code, result) {
+                if (code == 200) {
+                    var carrito = document.getElementById("ver_carrito");
+                    carrito.innerHTML = "";
+                    console.log(result)
+                    result.forEach(function(articulo) {
+                        var articuloDiv = document.createElement("div");
+                        articuloDiv.classList.add("comprar_carrito");
+                        articuloDiv.innerHTML = `
+                            <img src="${articulo.foto != null ? 'data:image/jpeg;base64,' + articulo.foto : '/usuario_sin_foto.png'}" alt="">
+                            <div class="carrito_details">
+                                <h3>${articulo.nombre}</h3>
+                                <p>${articulo.descripcion}</p>
+                            </div>
+                            <div class="carrito_bought">
+                                <p>$ ${articulo.precio} x ${articulo.cantidad} = $${articulo.precio * articulo.cantidad} Total</p>
+                            </div>
+                            <button type="button" onclick="eliminar_articulo(${articulo.idArticulo})">Eliminar</button>
+                        `;
+                        carrito.appendChild(articuloDiv);
+                    });
+                    muestra("carritoSeen");
+                } else {
+                    alert("Error al obtener el carrito de compras.");
+                }
+            });
+        }
+
+        function eliminar_articulo() {
+
+        }
+
+        function vaciar_carrito() {
+
+        }
+
+        function oculta_pantalla(id) {
+            oculta(id);
+            muestra("inicio");
+        }
+
+        function regresarbusqueda(id) {
+            oculta(id);
+            muestra("busqueda_articulos")
+            muestra("muestra_articulos");
+            muestra("encabezado_orderby");
+        }
+
+        function readSingleFile(files, imagen) {
+            var file = files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                imagen.src = reader.result;
+                // reader.result incluye al principio: "data:image/jpeg;base64,"
+                foto = reader.result.split(',')[1];
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function limpia_alta() {
+            get("alta_name").value = "";
+            get("descripcion_articulo").value = "";
+            get("precio_articulo").value = "";
+            get("existencia_articulo").value = "";
+            get("relevancia_articulo").value = "";
+            get("alta_imagen").src = "/usuario_sin_foto.png";
+            foto = null;
+        }
+
+        function alta() {
+            var cliente = new WSClient(URL);
+            var articulo = {
+                nombre: get("alta_name").value,
+                descripcion: get("descripcion_articulo").value,
+                precio: get("precio_articulo").value,
+                existencia: get("existencia_articulo").value,
+                relevancia: get("relevancia_articulo").value,
+                foto: foto,
+            };
+            cliente.postJson("captura_articulo", {
+                articulo: articulo
+            }, function(code, result) {
+                if (code == 200)
+                    alert("OK");
+                else
+                    alert(JSON.stringify(result));
+            });
+        }
+
+        function cierra_pantalla_busqueda() {
+            oculta_pantalla('busqueda_articulos');
+            oculta("encabezado_orderby")
+            muestra("encabezado_busqueda");
+            get("busqueda_nombre").readOnly = false;
+        }
+
+        function quita_foto() {
+            foto = null;
+            get('busqueda_imagen').src = 'usuario_sin_foto.png';
+            get('busqueda_file').value = '';
+        }
+
+        function borra() {
+            var client = new WSClient(URL);
+            client.postJson("borra_articulo", {
+                nombre: get("borra_nombre").value
+            }, function(code, result) {
+                if (code == 200)
+                    alert("OK");
+                else
+                    alert(JSON.stringify(result));
+            });
+        }
+    </script>
+</head>
+<body>
+<h1 style="text-align: center;">oquei</h1>
+<div id="inicio">
+    <div class="menu">
+        <button type="button" onclick="limpia_alta(); muestra_pantalla('captura_articulo')">Captura Articulo</button>
+        <button type="button" onclick="muestra_pantalla_compra()">Compra Articulos</button>
+    </div>
+</div>
+<div id="captura_articulo" style="display:none" class="captura">
+    <h2 style="text-align:center">Captura Articulo</h2>
+    <p>Nombre del Articulo *</p>
+    <input type="text" id="alta_name" value="" required/>
+    <p>Descripcion *</p>
+    <input type="text" id="descripcion_articulo" value="" required/>
+    <p>Precio $ *</p>
+    <input type="number" id="precio_articulo" step="0.01" min="0" required value=""/>
+    <p>Existencia *</p>
+    <input type="number" min="0" required id="existencia_articulo" value=""/>
+    <p>Relevancia (1 a 100) *</p>
+    <input type="number" min="1" max="100" required id="relevancia_articulo" value=""/>
+    <img id="alta_imagen" width="100px" src="/usuario_sin_foto.png">
+    <input type="file" onchange="readSingleFile(files,get('alta_imagen'))" multiple="false" accept="image/*"/>
+    <button type="button" onclick="alta()">Agregar Articulo</button>
+    <button type="button" onclick="limpia_alta()">Limpiar pantalla</button>
+    <button type="button" onclick="oculta_pantalla('captura_articulo')">Regresar</button>
+</div>
+<div id="busqueda_articulos" style="display: none;" class="comprar">
+    <div id="encabezado_busqueda">
+        <h2 style="text-align: center;">Buscar Articulos</h2>
+        <div class="comprar-busqueda">
+            <span>Busqueda</span>
+            <input type="text" id="buscar_articulo" value="" placeholder="Introduce una Palabra para buscar"/>
+            <div id="boton_busqueda">
+                <button type="button" onclick="busqueda()">Buscar articulo</button>
+                <button type="button" onclick="cierra_pantalla_busqueda()">Regresar</button>
+            </div>
+            <div style="display: none;" id="encabezado_orderby">
+                <select name="ordeby" id="busqueda_orderby">
+                    <option selected disabled>Ordenar por</option>
+                    <option value="nombre">Nombre</option>
+                    <option value="precio">Menor a Mayor Precio</option>
+                    <option value="precio_desc">Mayor a Menor Precio</option>
+                    <option value="relevancia">Relevancia</option>
+                </select>
+                <button type="button" onclick="orderby()">Ordenar</button>
+                <button type="submit" onclick="muestra_carrito()"> Ver Carrito</button>
+            </div>
+        </div>
+    </div>
+    <div class="comprar-articulos" id="muestra_articulos" style="display: none;">
+        <!-- Aquí se mostrarán los artículos encontrados -->
+    </div>
+</div>
+<div id="carritoSeen" style="display: none;" class="carrito">
+    <div class="comprar">
+        <h2 style="text-align: center;">Carrito de Compras</h2>
+        <div>
+            <button style="background-color: #dee7ff" type="button" onclick="vaciar_carrito()">Vaciar Carrito</button>
+            <button style="background-color: #dee7ff" type="button" onclick="regresarbusqueda('carritoSeen')">Seguir Comprando</button>
+        </div>
+    </div>
+    <div id="ver_carrito">
+        <!-- Aquí se mostrarán los artículos del carrito -->
+    </div>
+</div>
+</body>
+</html>
