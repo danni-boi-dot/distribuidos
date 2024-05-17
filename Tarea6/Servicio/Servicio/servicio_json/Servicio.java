@@ -310,4 +310,75 @@ public class Servicio {
         }
     }
 
+    @POST
+    @Path("eliminar_articulo_carrito")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response eliminar_articulo_carrito(String json) {
+        ParamEliminarArticuloCarrito param = j.fromJson(json, ParamEliminarArticuloCarrito.class);
+        int idArticulo = param.getIdArticulo();
+        int cantidad = param.getCantidad();
+
+        Connection conexion = null;
+        try {
+            conexion = pool.getConnection();
+            conexion.setAutoCommit(false);
+
+            // Verificar la cantidad en el carrito
+            PreparedStatement stmtVerif = conexion
+                    .prepareStatement("SELECT cantidad FROM carrito_compra WHERE id_articulo = ?");
+            stmtVerif.setInt(1, idArticulo);
+            ResultSet rs = stmtVerif.executeQuery();
+            if (!rs.next()) {
+                return Response.status(400).entity(j.toJson(new Error("El artículo no está en el carrito."))).build();
+            }
+            int cantidadEnCarrito = rs.getInt(1);
+            stmtVerif.close();
+
+            if (cantidad > cantidadEnCarrito) {
+                return Response.status(400)
+                        .entity(j.toJson(new Error("La cantidad a eliminar excede la cantidad en el carrito.")))
+                        .build();
+            }
+
+            // Eliminar la cantidad especificada del carrito
+            PreparedStatement stmtDelete = conexion
+                    .prepareStatement("DELETE FROM carrito_compra WHERE id_articulo = ? AND cantidad = ?");
+            stmtDelete.setInt(1, idArticulo);
+            stmtDelete.setInt(2, cantidad);
+            stmtDelete.executeUpdate();
+            stmtDelete.close();
+
+            // Sumar la cantidad eliminada a la cantidad disponible en los artículos
+            PreparedStatement stmtUpdate = conexion
+                    .prepareStatement("UPDATE articulos SET existencia = existencia + ? WHERE id_articulo = ?");
+            stmtUpdate.setInt(1, cantidad);
+            stmtUpdate.setInt(2, idArticulo);
+            stmtUpdate.executeUpdate();
+            stmtUpdate.close();
+
+            conexion.commit();
+            return Response.ok().build();
+        } catch (SQLException e) {
+            if (conexion != null) {
+                try {
+                    conexion.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+            return Response.status(500).entity(j.toJson(new Error("Error interno del servidor."))).build();
+        } finally {
+            if (conexion != null) {
+                try {
+                    conexion.setAutoCommit(true);
+                    conexion.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 }

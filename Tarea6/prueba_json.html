@@ -169,7 +169,7 @@
                 if (code == 200) {
                     var carrito = document.getElementById("ver_carrito");
                     carrito.innerHTML = "";
-                    console.log(result)
+                    console.log(result);
                     result.forEach(function(articulo) {
                         var articuloDiv = document.createElement("div");
                         articuloDiv.classList.add("comprar_carrito");
@@ -182,7 +182,7 @@
                             <div class="carrito_bought">
                                 <p>$ ${articulo.precio} x ${articulo.cantidad} = $${articulo.precio * articulo.cantidad} Total</p>
                             </div>
-                            <button type="button" onclick="eliminar_articulo(${articulo.idArticulo})">Eliminar</button>
+                            <button type="button" onclick="eliminar_articulo(${articulo.idArticulo, articulo.cantidad})">Eliminar</button>
                         `;
                         carrito.appendChild(articuloDiv);
                     });
@@ -193,9 +193,24 @@
             });
         }
 
-        function eliminar_articulo() {
+        function eliminar_articulo(idArticulo, cantidad) {
 
+            var data = {
+                idArticulo: idArticulo,
+                cantidad: cantidad
+            };
+
+            var cliente = new WSClient(URL);
+            cliente.postJson("eliminar_articulo_carrito", data, function(code, result) {
+                if (code == 200) {
+                    alert("Artículo eliminado del carrito.");
+                    muestra_carrito(); // Actualizar el carrito después de eliminar el artículo
+                } else {
+                    alert("Error al eliminar el artículo del carrito.");
+                }
+            });
         }
+
 
         function vaciar_carrito() {
 
