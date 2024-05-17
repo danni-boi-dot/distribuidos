@@ -204,6 +204,68 @@ public class Servicio {
     }
 
     @POST
+    @Path("ordenar_articulos")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response ordenar_articulos(String json) throws Exception {
+        ParamOrdenaArticulo p = (ParamOrdenaArticulo) j.fromJson(json, ParamOrdenaArticulo.class);
+        String columna;
+        switch (p.orden) {
+            case 1:
+                columna = "a.nombre";
+                break;
+            case 2:
+                columna = "a.precio";
+                break;
+            case 3:
+                columna = "a.precio DESC";
+                break;
+            case 4:
+                columna = "a.relevancia";
+                break;
+            default:
+                columna = "a.id_articulo"; // Orden predeterminado
+                break;
+        }
+
+        String consulta = "SELECT a.id_articulo, a.nombre, a.descripcion, a.precio, a.existencia, b.foto " +
+                "FROM articulos a " +
+                "LEFT OUTER JOIN fotos_articulos b ON a.id_articulo = b.id_articulo " +
+                "ORDER BY " + columna;
+
+        Connection conexion = pool.getConnection();
+
+        try {
+            PreparedStatement stmt_1 = conexion.prepareStatement(consulta);
+            try {
+                ResultSet rs = stmt_1.executeQuery();
+                try {
+                    ArrayList<ArticuloConsulta> lista = new ArrayList<ArticuloConsulta>();
+                    while (rs.next()) {
+                        ArticuloConsulta r = new ArticuloConsulta();
+                        r.id_articulo = rs.getInt(1);
+                        r.nombre = rs.getString(2);
+                        r.descripcion = rs.getString(3);
+                        r.precio = rs.getFloat(4);
+                        r.existencia = rs.getInt(5);
+                        r.foto = rs.getBytes(6);
+                        lista.add(r);
+                    }
+                    return Response.ok().entity(j.toJson(lista)).build();
+                } finally {
+                    rs.close();
+                }
+            } finally {
+                stmt_1.close();
+            }
+        } catch (Exception e) {
+            return Response.status(400).entity(j.toJson(new Error(e.getMessage()))).build();
+        } finally {
+            conexion.close();
+        }
+    }
+
+    @POST
     @Path("ver_carrito")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)

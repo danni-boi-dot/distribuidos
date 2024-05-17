@@ -43,52 +43,60 @@
             }
         }
 
-        function orderby() {
-            var select = document.getElementById("busqueda_orderby");
-            var orderby = select.options[select.selectedIndex].value;
-            var articulos = document.getElementsByClassName("comprar-articulos");
-            var articulosArray = Array.from(articulos);
+        function ordenar_busqueda() {
+            limpia_resultados();
+            // Obtener el valor seleccionado del menú desplegable de orden
+            var ordenSeleccionado = document.getElementById("busqueda_orderby").selectedIndex;
+            console.log(ordenSeleccionado)
+            // Verificar que se haya seleccionado un valor de orden
+            if (ordenSeleccionado) {
+                // Construir el objeto JSON con el parámetro de orden
+                var jsonOrden = {
+                    orden: parseInt(get("busqueda_orderby").selectedIndex)
+                };
+                // Enviar el JSON al servidor utilizando el cliente WebSocket
+                var cliente = new WSClient(URL);
+                cliente.postJson("ordenar_articulos", jsonOrden, function(code, result) {
+                    // Manejar la respuesta del servidor aquí
+                    if (code == 200 && result.length > 0) {
+                        // Limpiar cualquier resultado anterior
+                        oculta("muestra_articulos");
+                        console.log(result);
+                        // Iterar sobre todos los resultados encontrados
+                        result.forEach(function(articulo) {
+                            // Crear elementos HTML para mostrar cada artículo
+                            var nuevoArticulo = document.createElement("div");
+                            nuevoArticulo.classList.add("comprar-articulos");
+                            nuevoArticulo.innerHTML = `
+                                <img src="${articulo.foto != null ? 'data:image/jpeg;base64,' + articulo.foto : '/usuario_sin_foto.png'}" alt="">
+                                <div class="comprar_details">
+                                    <h3>${articulo.nombre}</h3>
+                                    <p>${articulo.descripcion}</p>
+                                </div>
+                                <div class="comprar_bought">
+                                    <p>$ ${articulo.precio}</p>
+                                    <input type="number" class="cantidad" value="1" min="1" placeholder="Cantidad">
+                                    <button type="button" class="agregar-carrito" onclick="agregarCarrito('${articulo.id_articulo}', this.parentNode.querySelector('.cantidad').value)">Comprar</button>
+                                    <p>${articulo.existencia}</p>
+                                </div>
+                            `;
+                            nuevoArticulo.dataset.id = articulo.id_articulo; 
+                            // Agregar el nuevo artículo al contenedor de artículos
+                            document.getElementById("muestra_articulos").appendChild(nuevoArticulo);
+                        });
 
-            switch (orderby) {
-                case "nombre":
-                    articulosArray.sort((a, b) => {
-                        var nombreA = a.querySelector('.comprar-details h3').textContent.toLowerCase();
-                        var nombreB = b.querySelector('.comprar-details h3').textContent.toLowerCase();
-                        return nombreA.localeCompare(nombreB);
-                    });
-                    break;
-                case "precio":
-                    articulosArray.sort((a, b) => {
-                        var precioA = parseFloat(a.querySelector('.comprar-bought p').textContent.slice(2));
-                        var precioB = parseFloat(b.querySelector('.comprar-bought p').textContent.slice(2));
-                        return precioA - precioB;
-                    });
-                    break;
-                case "precio_desc":
-                    articulosArray.sort((a, b) => {
-                        var precioA = parseFloat(a.querySelector('.comprar-bought p').textContent.slice(2));
-                        var precioB = parseFloat(b.querySelector('.comprar-bought p').textContent.slice(2));
-                        return precioB - precioA;
-                    });
-                    break;
-                case "relevancia":
-                    articulosArray.sort((a, b) => {
-                        var relevanciaA = parseInt(a.querySelector('.comprar-bought input[type="number"]').value);
-                        var relevanciaB = parseInt(b.querySelector('.comprar-bought input[type="number"]').value);
-                        return relevanciaB - relevanciaA;
-                    });
-                    break;
-                default:
-                    // No se realiza ningún ordenamiento
-                    break;
+                        // Mostrar la sección de artículos encontrados
+                        muestra("muestra_articulos");
+                        muestra("encabezado_orderby");
+                    }  else {
+                    // orden fallido
+                    alert("ordenado fallido");
+                }
+                });
+            } else {
+                // Manejar el caso en que no se haya seleccionado ningún valor de orden
+                alert("Por favor seleccione un valor de orden.");
             }
-
-            var contenedor = document.getElementById("muestra_articulos");
-            contenedor.innerHTML = ""; // Limpiamos el contenedor
-
-            articulosArray.forEach(function(articulo) {
-                contenedor.appendChild(articulo); // Agregamos los artículos ordenados al contenedor
-            });
         }
 
         function busqueda() {
@@ -317,7 +325,7 @@
                     <option value="precio_desc">Mayor a Menor Precio</option>
                     <option value="relevancia">Relevancia</option>
                 </select>
-                <button type="button" onclick="orderby()">Ordenar</button>
+                <button type="button" onclick="ordenar_busqueda()">Ordenar</button>
                 <button type="submit" onclick="muestra_carrito()"> Ver Carrito</button>
             </div>
         </div>
