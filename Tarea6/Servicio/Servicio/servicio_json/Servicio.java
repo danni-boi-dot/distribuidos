@@ -381,4 +381,41 @@ public class Servicio {
         }
     }
 
+    @POST
+    @Path("vaciar_carrito")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response vaciar_carrito() {
+        Connection conexion = null;
+        try {
+            conexion = pool.getConnection();
+            conexion.setAutoCommit(false);
+
+            PreparedStatement stmtDelete = conexion.prepareStatement("DELETE FROM carrito_compra");
+            stmtDelete.executeUpdate();
+            stmtDelete.close();
+
+            conexion.commit();
+            return Response.ok().build();
+        } catch (SQLException e) {
+            if (conexion != null) {
+                try {
+                    conexion.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            e.printStackTrace();
+            return Response.status(500).entity(j.toJson(new Error("Error interno del servidor."))).build();
+        } finally {
+            if (conexion != null) {
+                try {
+                    conexion.setAutoCommit(true);
+                    conexion.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
 }

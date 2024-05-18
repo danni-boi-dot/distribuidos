@@ -213,8 +213,27 @@
 
 
         function vaciar_carrito() {
-
+        // Mostrar ventana emergente de confirmación
+        var confirmacion = confirm("¿Está seguro de que desea vaciar el carrito de compras?");
+        
+        // Si el usuario confirma la acción
+        if (confirmacion) {
+            // Realizar una petición al backend para vaciar el carrito
+            var cliente = new WSClient(URL);
+            cliente.postJson("vaciar_carrito", {}, function(code, result) {
+                if (code == 200) {
+                    alert("El carrito de compras se ha vaciado correctamente.");
+                    // Actualizar la interfaz de usuario según sea necesario, por ejemplo, limpiando la lista de artículos en el carrito
+                    document.getElementById("ver_carrito").innerHTML = "";
+                    // O puedes volver a cargar la pantalla de búsqueda de artículos si lo prefieres
+                    regresarbusqueda('carritoSeen');
+                } else {
+                    alert("Error al vaciar el carrito de compras.");
+                }
+            });
         }
+    }
+
 
         function oculta_pantalla(id) {
             oculta(id);
